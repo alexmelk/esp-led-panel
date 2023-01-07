@@ -16,7 +16,7 @@ int _jsonLength = 2048;
 String _otaHostName = "SmartHomeCore";
 const char *www_username = "admin";
 const char *www_password = "admin";
-float version = 1.4;
+float version = 2;
 
 FtpServer ftp;
 DynamicJsonDocument json(_jsonLength);
@@ -41,7 +41,7 @@ void shCore::coreInit(void)
 	// ArduinoOTA.setHostname(otaHostName);
 	// ArduinoOTA.begin();
 
-	LittleFS.begin();
+	SPIFFS.begin();
 
 	Serial.begin(_serialSpeed);
 
@@ -68,7 +68,7 @@ void shCore::coreInit(void)
 
 void shCore::coreHandle(void)
 {
-	_server.handleClient(); //ждём клиентов
+	_server.handleClient(); // ждём клиентов
 	ftp.handleFTP();
 	String str = tryToReceive();
 	if (str.length() != 0)
@@ -92,7 +92,7 @@ void shCore::coreHandle(void)
 	// ArduinoOTA.handle();  //ждём обнов
 	blink(1, 5);
 }
-//работа с устройствами
+// работа с устройствами
 void shCore::wifiInit()
 {
 	File f = openFile("wifiConf.conf");
@@ -161,10 +161,10 @@ void shCore::wifiInit()
 	filesHandling();
 	_server.begin(_httpPort);
 }
-//события http-сервера
+// события http-сервера
 void shCore::htmlAccessPoint()
 {
-	File f = LittleFS.open("/htmlAccessPoint.html", "r");
+	File f = SPIFFS.open("/htmlAccessPoint.html", "r");
 	if (!f)
 	{
 		Serial.println("file open failed");
@@ -180,7 +180,7 @@ void shCore::htmlAccessPoint()
 	f.close();
 }
 void shCore::handleNotFound()
-{ //страница ошибок
+{ // страница ошибок
 
 	String message = "File Not Found\n\n";
 	message += "URI: ";
@@ -225,7 +225,7 @@ void shCore::html()
 {
 	// if (!_server.authenticate(www_username, www_password))
 	//	return _server.requestAuthentication();
-	File f = LittleFS.open("/index.html", "r");
+	File f = SPIFFS.open("/index.html", "r");
 	if (!f)
 	{
 		Serial.println("file open failed");
@@ -243,9 +243,9 @@ void shCore::html()
 }
 void shCore::clearAll()
 {
-	LittleFS.remove("/wifiConf.conf");
-	LittleFS.remove("/device.conf");
-	LittleFS.remove("/devices.conf");
+	SPIFFS.remove("/wifiConf.conf");
+	SPIFFS.remove("/device.conf");
+	SPIFFS.remove("/devices.conf");
 
 	_server.send(200, "text/html", "clear Ok");
 	Serial.println("clear Ok");
@@ -277,7 +277,7 @@ void shCore::sendWifiList()
 	_server.send(200, "text/plain", http);
 }
 
-//общие функции
+// общие функции
 String shCore::tryToReceive()
 {
 	int udpPacketSize = _udp.parsePacket();
@@ -318,7 +318,7 @@ void shCore::configWiFi()
 }
 void shCore::filesHandling()
 {
-	Dir dir = LittleFS.openDir("/");
+	Dir dir = SPIFFS.openDir("/");
 	Serial.println("Add file to listeaner");
 	while (dir.next())
 	{
@@ -328,7 +328,7 @@ void shCore::filesHandling()
 }
 void shCore::fileDownload()
 {
-	File f = LittleFS.open(_server.uri(), "r");
+	File f = SPIFFS.open(_server.uri(), "r");
 	if (!f)
 	{
 		Serial.println("file open failed");
@@ -376,7 +376,7 @@ String shCore::getContentType(String filename)
 }
 File shCore::openFile(String Filename)
 {
-	File f = LittleFS.open("/" + Filename, "r");
+	File f = SPIFFS.open("/" + Filename, "r");
 	if (!f)
 	{
 		Serial.println("file open failed");
@@ -386,7 +386,7 @@ File shCore::openFile(String Filename)
 }
 void shCore::createOrErase(String Filename, String Text)
 {
-	File f = LittleFS.open("/" + Filename, "w");
+	File f = SPIFFS.open("/" + Filename, "w");
 	if (!f)
 	{
 		Serial.println("file open failed");
@@ -432,7 +432,7 @@ void shCore::setMainPage(String pageName)
 }
 void shCore::sendMainPage()
 {
-	File f = LittleFS.open("/" + _mainPage, "r");
+	File f = SPIFFS.open("/" + _mainPage, "r");
 	if (!f)
 	{
 		Serial.println("file open failed");
