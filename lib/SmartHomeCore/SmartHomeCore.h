@@ -1,65 +1,47 @@
 #pragma once
 #include <Arduino.h>
 // for wifi
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <WiFiUdp.h>
-#include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
-#include <ESP8266FtpServer.h>
-#include <ESP8266HTTPClient.h>
-#include <FS.h>
+#include <ESP8266WiFi.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <LittleFS.h>
+#include <WiFiClient.h>
 
-namespace shCore
-{
+#include <ArduinoJson.hpp>
 
-    static ESP8266WebServer _server;
-    static WiFiUDP _udp;
+class SmartHomeCore {
+ public:
+  int serialSpeed = 115200;
+  int serialTimeOut = 10;
+  int port = 80;
+  String ssid = "SmartHomeCore";
+  String pass = "123123123";
+  int wifiChannel = 8;
+  int maxConnection = 1;
+  int hiddenWifi = 0;
+  int jsonLength = 2048;
+  IPAddress apIP = IPAddress(77, 77, 77, 77);
+  IPAddress subnet = IPAddress(255, 255, 255, 0);
+  DynamicJsonDocument json = DynamicJsonDocument(jsonLength);
+  AsyncWebServer server = AsyncWebServer(port);
 
-    void registrateEvent(String uri, void (*function)());
-    void sendToServer(int code, String contentType, String str);
-    String getFromServer(String arg);
-    void coreInit(void);
-    void coreHandle(void);
-    void wifiInit(void);
+  SmartHomeCore(String ssid, String pass);
+  SmartHomeCore(void);
+  void begin();
 
-    // события http сервера
-    void handleNotFound(void);
-    // html-страница для режима инициализации
-    void htmlAccessPoint(void);
-    // инормационная страница
-    void api(void);
-    // html-страница для нормального режима работы
-    void html(void);
-    // сброс до заводских настроек
-    void clearAll(void);
-    // отправляем список доступных wifi сетей
-    void sendWifiList(void);
+ private:
+  String sendWifiList(void);
+  void blink(int num, int delayMs);
+  void clearAll();
+  File openFile(String Filename);
+  void createOrErase(String Filename, String Text);
+  void onRequest(AsyncWebServerRequest *request);
+  void initSerial();
+  void initFS();
+  void initPins();
+  void initWiFi();
+  void initServer(int port);
 
-    // пробуем принять udp
-    String tryToReceive(void);
-    // пробуем отправить udp
-    void tryToSend(IPAddress remoteIp, int udpPort, String text);
-    // удалённая настройка wifi
-    void configWiFi(void);
-    // создаём события для всех файлов в памяти
-    void filesHandling(void);
-    // событие загрузки файла с сервера
-    void fileDownload(void);
-    // определяем тип файла
-    String getContentType(String filename);
-    File openFile(String Filename);
-    void createOrErase(String Filename, String Text);
-    void blink(int num, int delayMs);
-
-    // set
-    void setSerialSpeed(int serialSpeed);
-    void setSSIDwifiAP(String ssid);
-    void setPassWiFiAP(String pass);
-    void setUDPport(int port);
-    void setHTTPport(int port);
-    void setOTAname(String name);
-    void setMainPage(String pageName);
-    void sendMainPage();
+  void endpoints();
 };
